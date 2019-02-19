@@ -11,11 +11,8 @@ public class DateTimeUtil {
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
 
-    public static boolean isBetween(LocalTime lt, LocalTime startTime, LocalTime endTime) {
-        return lt.compareTo(startTime) >= 0 && lt.compareTo(endTime) <= 0;
-    }
-    public static boolean isBetween(LocalDateTime lt, LocalDateTime startTime, LocalDateTime endTime) {
-        return lt.compareTo(startTime) > 0 && lt.compareTo(endTime) < 0;
+    public static <T extends Comparable<T>> boolean isBetween(T data, T start, T end) {
+        return data.compareTo(start) >= 0 && data.compareTo(end) <= 0;
     }
     public static String toString(LocalDateTime ldt) {
         return ldt == null ? "" : ldt.format(DATE_TIME_FORMATTER);

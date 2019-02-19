@@ -46,22 +46,11 @@ public class MealServiceImpl implements MealService {
         checkNotFoundWithId(repository.save(meal,userId), meal.getId());
     }
 
-    @Override
-    public List<Meal> getAll(int userId) {
-        return repository.getAll(userId);
-    }
 
     @Override
-    public List<Meal> filteredTime(int userId, LocalDate startDate, LocalDate endDate,
-                                   LocalTime startTime, LocalTime endTime) {
-
-        LocalDateTime start = LocalDateTime.of(startDate, startTime);
-        LocalDateTime end = LocalDateTime.of(endDate, endTime);
-        return repository.filteredTime(userId,start,end);
+    public List<Meal> getAll(int userId, LocalDate startDate, LocalDate endDate) {
+        return repository.getAll(userId, startDate, endDate);
     }
 
-    @Override
-    public List<MealTo> getWithExcess(int userId, int calories) {
-        return  MealsUtil.getWithExcess(getAll(userId), calories);
-    }
+
 }

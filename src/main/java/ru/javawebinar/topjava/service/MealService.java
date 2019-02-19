@@ -19,10 +19,5 @@ public interface MealService {
 
     void update(Meal meal,int userId);
 
-    List<Meal> getAll(int userId);
-
-    List<Meal> filteredTime(int userId, LocalDate startDate, LocalDate endDate,
-                            LocalTime startTime, LocalTime endTime);
-
-    List<MealTo>  getWithExcess(int userId,int calories);
+    List<Meal> getAll(int userId, LocalDate startDate, LocalDate endDate);
 }

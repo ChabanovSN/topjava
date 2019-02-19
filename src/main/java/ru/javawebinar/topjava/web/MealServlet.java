@@ -31,6 +31,7 @@ public class MealServlet extends HttpServlet {
 
     private ConfigurableApplicationContext appCtx;
     private MealRestController controller;
+
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
@@ -41,59 +42,63 @@ public class MealServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
-        String id = request.getParameter("id");
-        String action = request.getParameter("action");
-        int userId = SecurityUtil.authUserId();
-        if (action.equals("timefilter")) {
-            LocalDate startDate = DateTimeUtil.parseLocalDate(request.getParameter("startDate"), LocalDate.MIN);
-            LocalDate endDate = DateTimeUtil.parseLocalDate(request.getParameter("endDate"), LocalDate.MAX);
-            LocalTime startTime = DateTimeUtil.parseLocalTime(request.getParameter("startTime"), LocalTime.MIN);
-            LocalTime endTime = DateTimeUtil.parseLocalTime(request.getParameter("endTime"), LocalTime.MAX);
-            request.setAttribute("meals",
-                    MealsUtil.getWithExcess(controller.filteredTime(userId, startDate, endDate, startTime, endTime), MealsUtil.DEFAULT_CALORIES_PER_DAY));
+        if (request.getParameter("action").equals("timefilter")) {
+            log.info("filter time and/or date");
+            String startDate = request.getParameter("startDate");
+            String endDate = request.getParameter("endDate");
+            String startTime = request.getParameter("startTime");
+            String endTime = request.getParameter("endTime");
+            request.setAttribute("meals", controller.getAllFiltered(startDate, endDate, startTime, endTime));
             request.getRequestDispatcher("/meals.jsp").forward(request, response);
-        } else {
-
-            Meal meal = new Meal(id.isEmpty() ? null : Integer.valueOf(id),
-                    LocalDateTime.parse(request.getParameter("dateTime")),
-                    request.getParameter("description"),
-                    Integer.parseInt(request.getParameter("calories")));
-
-            log.info(meal.isNew() ? "Create {}" : "Update {}", meal);
-            controller.create(meal, userId);
-            response.sendRedirect("meals");
         }
     }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String action = request.getParameter("action");
-        int userId = SecurityUtil.authUserId();
+
         switch (action == null ? "all" : action) {
             case "delete":
-                int id = getId(request);
+                String id = request.getParameter("id");
+
                 log.info("Delete {}", id);
-                controller.delete(id,userId);
+                controller.delete(id);
                 response.sendRedirect("meals");
                 break;
             case "create":
-            case "update":
-                final Meal meal = "create".equals(action) ?
-                        new Meal(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES), "", 1000)
-                                                          :
-                        controller.get(getId(request),userId);
+                Meal meal = new Meal(SecurityUtil.authUserId(), LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES), "", 1000);
                 request.setAttribute("meal", meal);
                 request.getRequestDispatcher("/mealForm.jsp").forward(request, response);
+                String datetime = request.getParameter("dateTime");
+                String description = request.getParameter("description");
+                String calories = request.getParameter("calories");
+                if (description != null) {
+                    controller.create(datetime, description, calories);
+                }
                 break;
+            case "update":
+                meal = controller.get(request.getParameter("id"));
+                System.out.println("UPDATE  " + meal);
+                request.setAttribute("meal", meal);
+                request.getRequestDispatcher("/mealForm.jsp").forward(request, response);
+                datetime = request.getParameter("dateTime");
+                description = request.getParameter("description");
+                calories = request.getParameter("calories");
+                String idString = request.getParameter("id");
+                if (description != null)
+                    controller.update(datetime, description, calories, idString);
+
+                break;
+
             case "all":
             default:
                 log.info("getAll");
-                request.setAttribute("meals",
-                       controller.getWithExcess(userId,SecurityUtil.authUserCaloriesPerDay()));
+                request.setAttribute("meals", controller.getAll());
                 request.getRequestDispatcher("/meals.jsp").forward(request, response);
                 break;
         }
     }
+
 
     private int getId(HttpServletRequest request) {
         String paramId = Objects.requireNonNull(request.getParameter("id"));
