@@ -28,7 +28,7 @@ public class InMemoryMealRepositoryImpl implements MealRepository {
     private static final Logger log = LoggerFactory.getLogger(InMemoryMealRepositoryImpl.class);
 
     // Map  userId -> (mealId-> meal)
-    private Map<Integer, ru.javawebinar.topjava.repository.inmemory.InMemoryBaseRepositoryImpl<Meal>> usersMealsMap = new ConcurrentHashMap<>();
+    private Map<Integer, InMemoryBaseRepositoryImpl<Meal>> usersMealsMap = new ConcurrentHashMap<>();
 
     {
         MealsUtil.MEALS.forEach(meal -> save(meal, USER_ID));
@@ -40,7 +40,7 @@ public class InMemoryMealRepositoryImpl implements MealRepository {
 
     @Override
     public Meal save(Meal meal, int userId) {
-        ru.javawebinar.topjava.repository.inmemory.InMemoryBaseRepositoryImpl<Meal> meals = usersMealsMap.computeIfAbsent(userId, uid -> new ru.javawebinar.topjava.repository.inmemory.InMemoryBaseRepositoryImpl<>());
+       InMemoryBaseRepositoryImpl<Meal> meals = usersMealsMap.computeIfAbsent(userId, uid -> new InMemoryBaseRepositoryImpl<>());
         return meals.save(meal);
     }
 
@@ -56,13 +56,13 @@ public class InMemoryMealRepositoryImpl implements MealRepository {
 
     @Override
     public boolean delete(int id, int userId) {
-        ru.javawebinar.topjava.repository.inmemory.InMemoryBaseRepositoryImpl<Meal> meals = usersMealsMap.get(userId);
+       InMemoryBaseRepositoryImpl<Meal> meals = usersMealsMap.get(userId);
         return meals != null && meals.delete(id);
     }
 
     @Override
     public Meal get(int id, int userId) {
-        ru.javawebinar.topjava.repository.inmemory.InMemoryBaseRepositoryImpl<Meal> meals = usersMealsMap.get(userId);
+        InMemoryBaseRepositoryImpl<Meal> meals = usersMealsMap.get(userId);
         return meals == null ? null : meals.get(id);
     }
 
@@ -77,7 +77,7 @@ public class InMemoryMealRepositoryImpl implements MealRepository {
     }
 
     private List<Meal> getAllFiltered(int userId, Predicate<Meal> filter) {
-        ru.javawebinar.topjava.repository.inmemory.InMemoryBaseRepositoryImpl<Meal> meals = usersMealsMap.get(userId);
+        InMemoryBaseRepositoryImpl<Meal> meals = usersMealsMap.get(userId);
         return meals == null ? Collections.emptyList() :
                 meals.getCollection().stream()
                         .filter(filter)
