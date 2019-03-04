@@ -1,9 +1,13 @@
 package ru.javawebinar.topjava.service;
 
+import org.junit.AfterClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.rules.Stopwatch;
+import org.junit.runner.Description;
 import org.junit.runner.RunWith;
+import org.slf4j.Logger;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
@@ -15,7 +19,9 @@ import ru.javawebinar.topjava.util.exception.NotFoundException;
 
 import java.time.LocalDate;
 import java.time.Month;
+import java.util.concurrent.TimeUnit;
 
+import static org.slf4j.LoggerFactory.getLogger;
 import static ru.javawebinar.topjava.MealTestData.*;
 import static ru.javawebinar.topjava.UserTestData.ADMIN_ID;
 import static ru.javawebinar.topjava.UserTestData.USER_ID;
@@ -28,8 +34,30 @@ import static ru.javawebinar.topjava.UserTestData.USER_ID;
 @Sql(scripts = "classpath:db/populateDB.sql", config = @SqlConfig(encoding = "UTF-8"))
 public class MealServiceTest {
 
+    private static final Logger log = getLogger(MealServiceTest.class);
+
+    private static StringBuilder results = new StringBuilder();
+
     @Rule
     public ExpectedException thrown = ExpectedException.none();
+
+    @Rule
+    public Stopwatch stopWatch = new Stopwatch() {
+        @Override
+        protected void succeeded(long nanos, Description description) {
+            results.append(String.format("\n%-20s %7d", description.getMethodName(), TimeUnit.NANOSECONDS.toMillis(nanos))).append("ms succeeded");
+        }
+
+        @Override
+        protected void failed(long nanos, Throwable e, Description description) {
+            results.append(String.format("\n%-20s %7d", description.getMethodName(), TimeUnit.NANOSECONDS.toMillis(nanos))).append("ms failed");
+        }
+
+        @Override
+        protected void finished(long nanos, Description description) {
+            results.append(String.format("\n%-20s %7d", description.getMethodName(), TimeUnit.NANOSECONDS.toMillis(nanos))).append("ms finished");
+        }
+    };
 
     static {
         SLF4JBridgeHandler.install();
@@ -94,5 +122,10 @@ public class MealServiceTest {
         assertMatch(service.getBetweenDates(
                 LocalDate.of(2015, Month.MAY, 30),
                 LocalDate.of(2015, Month.MAY, 30), USER_ID), MEAL3, MEAL2, MEAL1);
+    }
+
+    @AfterClass
+    public static void printResult() {
+        log.info(results.toString());
     }
 }
